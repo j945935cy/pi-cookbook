@@ -51,7 +51,7 @@ pi-tui/
 
 - **Differential Rendering**：只重繪改變的部分，效率更高
 - **Keyboard Handling**：完整的鍵盤事件處理
-- **Theme System**：可自訂的颜色主題
+- **Theme System**：可自訂的顏色主題
 - **Cross-platform**：支援 Linux、macOS、Windows
 
 ### 為什麼分離 TUI？

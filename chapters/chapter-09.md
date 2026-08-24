@@ -286,7 +286,7 @@ pi -p "使用 my-skill 處理這個問題"
 ```
 ```
 
-### Skill 2：API 文件生成
+### Skill 2：API 文件產生
 
 ```markdown
 <!-- skills/api-docs/SKILL.md -->
@@ -294,11 +294,11 @@ pi -p "使用 my-skill 處理這個問題"
 
 ## Trigger
 - 用戶提到 api docs, swagger, openapi, 文件
-- 用戶提到 API 規格, 接口文檔
+- 用戶提到 API 規格, 介面文件
 
 ## Instructions
 
-### 文件生成流程
+### 文件產生流程
 1. **掃描 API routes**
    ```bash
    grep -r "router\." src/api/
