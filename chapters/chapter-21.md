@@ -15,31 +15,33 @@ Pi 的效能優化和基準測試。
 
 ## 21.2 基準測試
 
-### 啟動速度
+> **注意**：以下數據為大致估計值，實際效能可能因硬體、模型版本、網路狀況等因素而異。如需精確數據，請自行執行基準測試。
+
+### 啟動速度（參考值）
 
 ```
-Pi:          80ms
-Claude Code: 450ms
-OpenCode:    280ms
-Aider:       180ms
+Pi:          ~100ms
+Claude Code: ~500ms
+OpenCode:    ~300ms
+Aider:       ~200ms
 ```
 
-### 記憶體使用
+### 記憶體使用（參考值）
 
 ```
-Pi:          45MB
-Claude Code: 95MB
-OpenCode:    72MB
-Aider:       55MB
+Pi:          ~50MB
+Claude Code: ~100MB
+OpenCode:    ~80MB
+Aider:       ~60MB
 ```
 
-### Token 效率
+### Token 效率（參考值）
 
 ```
-Pi:          850 tokens (系統提示)
-Claude Code: 2,800 tokens
-OpenCode:    4,200 tokens
-Aider:       1,800 tokens
+Pi:          ~1,000 tokens (系統提示)
+Claude Code: ~3,000 tokens
+OpenCode:    ~5,000 tokens
+Aider:       ~2,000 tokens
 ```
 
 ## 21.3 效能優化

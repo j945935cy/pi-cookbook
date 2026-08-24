@@ -80,7 +80,14 @@ interface ReadToolParams {
 
 ```typescript
 // tools/read.js 核心邏輯
-export async function execute(args, signal) {
+import { readFileSync, existsSync } from "node:fs";
+import { resolve } from "node:path";
+
+function resolvePath(path: string): string {
+  return resolve(path);
+}
+
+export async function execute(args: { path: string; offset?: number; limit?: number }, signal: AbortSignal) {
   const { path, offset, limit } = args;
   
   // 解析路徑
@@ -152,7 +159,14 @@ interface WriteToolParams {
 
 ```typescript
 // tools/write.js 核心邏輯
-export async function execute(args, signal) {
+import { writeFileSync, existsSync, mkdirSync } from "node:fs";
+import { resolve, dirname } from "node:path";
+
+function resolvePath(path: string): string {
+  return resolve(path);
+}
+
+export async function execute(args: { path: string; content: string }, signal: AbortSignal) {
   const { path, content } = args;
   
   // 解析路徑
@@ -227,7 +241,14 @@ interface EditToolParams {
 
 ```typescript
 // tools/edit.js 核心邏輯
-export async function execute(args, signal) {
+import { readFileSync, writeFileSync } from "node:fs";
+import { resolve } from "node:path";
+
+function resolvePath(path: string): string {
+  return resolve(path);
+}
+
+export async function execute(args: { path: string; oldString: string; newString: string; replaceAll?: boolean }, signal: AbortSignal) {
   const { path, oldString, newString, replaceAll } = args;
   
   // 解析路徑
@@ -313,7 +334,9 @@ interface BashToolParams {
 
 ```typescript
 // tools/bash.js 核心邏輯
-export async function execute(args, signal) {
+import { spawn } from "node:child_process";
+
+export async function execute(args: { command: string; timeout?: number; workdir?: string }, signal: AbortSignal) {
   const { command, timeout, workdir } = args;
   
   // 建立子程序

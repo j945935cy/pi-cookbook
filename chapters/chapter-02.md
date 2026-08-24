@@ -14,14 +14,32 @@ npm install -g --ignore-scripts @earendil-works/pi-coding-agent
 ### 使用 curl（Linux/macOS）
 
 ```bash
-curl -fsSL https://pi.dev/install.sh | sh
+# 下載安裝腳本
+curl -fsSL https://pi.dev/install.sh -o install.sh
+
+# 檢查腳本內容（重要！）
+cat install.sh
+
+# 確認無誤後執行
+sh install.sh
 ```
+
+> **安全提醒**：永遠不要直接執行 `curl | sh`。先下載、檢查內容，再執行。
 
 ### 使用 PowerShell（Windows）
 
 ```powershell
-powershell -c "irm https://pi.dev/install.ps1 | iex"
+# 下載安裝腳本
+Invoke-WebRequest -Uri "https://pi.dev/install.ps1" -OutFile "install.ps1"
+
+# 檢查腳本內容（重要！）
+Get-Content install.ps1
+
+# 確認無誤後執行
+.\install.ps1
 ```
+
+> **安全提醒**：永遠不要直接執行 `iex (Invoke-WebRequest ...)`。先下載、檢查內容，再執行。
 
 ### 驗證安裝
 
@@ -44,8 +62,10 @@ export ANTHROPIC_API_KEY="sk-ant-..."
 export OPENAI_API_KEY="sk-..."
 
 # Google
-export GOOGLE_API_KEY="AIza..."
+export GEMINI_API_KEY="AIza..."
 ```
+
+> **安全提醒**：API Key 是敏感資訊。建議使用 `.env` 檔案（加入 `.gitignore`），而非直接 export。
 
 ### 方式二：OAuth 互動式登入
 

@@ -11,6 +11,8 @@ Pi 的安全模型設計。
 3. **沙箱隔離**：容器化隔離執行環境
 4. **審計追蹤**：記錄所有操作
 
+> **重要說明**：Pi 的安全模型是「使用者批准」而非「系統強制」。AI 可以請求執行操作，但最終決定權在使用者手中。
+
 ## 16.2 權限模型
 
 ### 權限等級
@@ -85,7 +87,7 @@ const writeSecurityRules = [
   {
     pattern: /\.env/,
     action: "confirm",
-    reason: "Environment files contain secrets"
+    reason: "Environment files may contain secrets"
   },
   {
     pattern: /\.ssh\//,
@@ -98,6 +100,9 @@ const writeSecurityRules = [
     reason: "AWS credentials are sensitive"
   }
 ];
+
+// 注意：這些是建議的安全規則，實際實作可能不同
+// 請參考 Pi 官方文件了解最新的安全機制
 ```
 
 ## 16.4 Extension 安全

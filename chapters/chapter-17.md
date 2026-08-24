@@ -9,7 +9,10 @@
 ```dockerfile
 FROM node:20-slim
 
-WORKDIR /app
+# 建立非 root 使用者
+RUN useradd -m -s /bin/bash pi-user
+
+WORKDIR /workspace
 
 # 安裝 Pi
 RUN npm install -g --ignore-scripts @earendil-works/pi-coding-agent
@@ -17,9 +20,14 @@ RUN npm install -g --ignore-scripts @earendil-works/pi-coding-agent
 # 設定環境
 ENV PI_NON_INTERACTIVE=1
 
+# 切換到非 root 使用者
+USER pi-user
+
 # 啟動
 ENTRYPOINT ["pi"]
 ```
+
+> **安全提醒**：避免在容器中使用 root 使用者。使用非 root 使用者可以減少潛在的安全風險。
 
 ### 建立映像
 
@@ -48,8 +56,6 @@ docker run --rm \
 ### docker-compose.yml
 
 ```yaml
-version: '3.8'
-
 services:
   pi-agent:
     build: .
@@ -60,6 +66,12 @@ services:
       - PI_NON_INTERACTIVE=1
     stdin_open: true
     tty: true
+    # 安全設定
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
 ```
 
 ### 使用方式

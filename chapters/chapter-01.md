@@ -17,7 +17,7 @@ edit    - 編輯檔案
 bash    - 執行命令
 ```
 
-System prompt 不到 1,000 tokens。核心 agent loop 只有 418 行 TypeScript。
+System prompt 不到 1,000 tokens。核心 agent loop 只有 552 行 TypeScript。
 
 這不是簡化，而是**提煉**。
 

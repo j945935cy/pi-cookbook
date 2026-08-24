@@ -129,20 +129,17 @@ Session Start
 ### 完整事件列表
 
 ```typescript
+// Pi 使用的實際事件名稱（從官方 extensions 確認）
 type ExtensionEvent =
-  | "session_start"
-  | "session_shutdown"
-  | "session_before_switch"
-  | "session_before_fork"
-  | "turn_start"
-  | "turn_end"
-  | "message_start"
-  | "message_end"
-  | "tool_execution_start"
-  | "tool_execution_end"
-  | "agent_start"
-  | "agent_end";
+  | "tool_call"                    // 工具呼叫（可阻擋）
+  | "session_before_switch"        // Session 切換前
+  | "session_before_fork"          // Session 分支前
+  | "session_before_compaction"    // Session 壓縮前
+  | "message_rendered"             // 訊息渲染後
+  | "turn_end";                    // 每輪結束
 ```
+
+> **重要**：事件名稱使用 snake_case，而非 camelCase。請參考官方 extensions 範例確認最新的 API。
 
 ## 8.4 註冊自訂工具
 
@@ -150,63 +147,59 @@ type ExtensionEvent =
 
 ```typescript
 // extensions/auto-commit/index.ts
-export default {
-  name: "auto-commit",
-  
-  hooks: {
-    afterToolCall: async (ctx) => {
-      // 只在 write 或 edit 後觸發
-      if (ctx.toolCall.name === "write" || ctx.toolCall.name === "edit") {
-        const filePath = ctx.args.path;
-        
-        // Git add
-        await ctx.bash(`git add ${filePath}`);
-        
-        // Git commit
-        const message = `ai: update ${filePath}`;
-        await ctx.bash(`git commit -m "${message}"`);
-        
-        return { 
-          content: [{ type: "text", text: `Committed: ${message}` }] 
-        };
-      }
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+
+export default function (pi: ExtensionAPI) {
+  pi.on("tool_call", async (event, ctx) => {
+    // 只在 write 或 edit 後觸發
+    if (event.toolName === "write" || event.toolName === "edit") {
+      const filePath = event.input.path;
+      
+      // Git add
+      await ctx.bash(`git add ${filePath}`);
+      
+      // Git commit
+      const message = `ai: update ${filePath}`;
+      await ctx.bash(`git commit -m "${message}"`);
+      
+      return { 
+        content: [{ type: "text", text: `Committed: ${message}` }] 
+      };
     }
-  }
-};
+  });
+}
 ```
 
 ### 範例：測試守衛
 
 ```typescript
 // extensions/test-guard/index.ts
-export default {
-  name: "test-guard",
-  
-  hooks: {
-    beforeToolCall: async (ctx) => {
-      // 阻止危險操作
-      if (ctx.toolCall.name === "bash") {
-        const command = ctx.args.command;
-        
-        // 阻止 npm publish
-        if (command.includes("npm publish")) {
-          return { 
-            block: true, 
-            reason: "Cannot publish from AI session" 
-          };
-        }
-        
-        // 阻止 rm -rf
-        if (command.includes("rm -rf")) {
-          return { 
-            block: true, 
-            reason: "Dangerous command blocked" 
-          };
-        }
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+
+export default function (pi: ExtensionAPI) {
+  pi.on("tool_call", async (event, ctx) => {
+    // 阻止危險操作
+    if (event.toolName === "bash") {
+      const command = event.input.command;
+      
+      // 阻止 npm publish
+      if (command.includes("npm publish")) {
+        return { 
+          block: true, 
+          reason: "Cannot publish from AI session" 
+        };
+      }
+      
+      // 阻止 rm -rf
+      if (command.includes("rm -rf")) {
+        return { 
+          block: true, 
+          reason: "Dangerous command blocked" 
+        };
       }
     }
-  }
-};
+  });
+}
 ```
 
 ## 8.5 Context Injection
@@ -319,117 +312,103 @@ export default {
 
 ```typescript
 // extensions/subagent/index.ts
-export default {
-  name: "subagent",
+import { defineTool, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { Type } from "@earendil-works/pi-ai";
+
+const spawnAgentTool = defineTool({
+  name: "spawn_agent",
+  label: "Spawn Agent",
+  description: "Spawn a sub-agent for parallel work",
+  parameters: Type.Object({
+    task: Type.String({ description: "Task description" }),
+    model: Type.Optional(Type.String({ description: "Model to use" })),
+  }),
   
-  tools: [
-    {
-      name: "spawn_agent",
-      description: "Spawn a sub-agent for parallel work",
-      parameters: {
-        task: { type: "string", description: "Task description" },
-        model: { type: "string", description: "Model to use" }
-      },
-      execute: async (args, signal) => {
-        // 建立新的 Agent 實例
-        const agent = new Agent({
-          model: { 
-            provider: "anthropic", 
-            id: args.model || "claude-sonnet-4-20250514" 
-          }
-        });
-        
-        // 執行任務
-        await agent.prompt(args.task);
-        
-        // 回傳結果
-        const lastMessage = agent.state.messages.pop();
-        return {
-          content: lastMessage.content
-        };
+  async execute(_toolCallId, params, _signal, _onUpdate, _ctx) {
+    // 建立新的 Agent 實例
+    const agent = new Agent({
+      model: { 
+        provider: "anthropic", 
+        id: params.model || "claude-sonnet-4-20250514" 
       }
-    }
-  ],
-  
-  commands: [
-    {
-      name: "/parallel",
-      description: "Execute task in parallel with sub-agent",
-      handler: async (args) => {
-        // 這裡可以實作更複雜的 parallel 邏輯
-        return `Task delegated to sub-agent: ${args}`;
-      }
-    }
-  ]
-};
+    });
+    
+    // 執行任務
+    await agent.prompt(params.task);
+    
+    // 回傳結果
+    const lastMessage = agent.state.messages.pop();
+    return {
+      content: lastMessage.content
+    };
+  }
+});
+
+export default function (pi: ExtensionAPI) {
+  pi.registerTool(spawnAgentTool);
+}
 ```
 
 ## 8.8 實戰範例：Code Analyzer
 
 ```typescript
 // extensions/code-analyzer/index.ts
-export default {
-  name: "code-analyzer",
+import { readFile } from "node:fs/promises";
+import { defineTool, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { Type } from "@earendil-works/pi-ai";
+
+const analyzeComplexityTool = defineTool({
+  name: "analyze_complexity",
+  label: "Analyze Complexity",
+  description: "Analyze code complexity metrics",
+  parameters: Type.Object({
+    file: Type.String({ description: "File to analyze" }),
+  }),
   
-  tools: [
-    {
-      name: "analyze_complexity",
-      description: "Analyze code complexity metrics",
-      parameters: {
-        file: { type: "string", description: "File to analyze" }
-      },
-      execute: async (args) => {
-        const code = await readFile(args.file, "utf-8");
-        
-        const metrics = {
-          lines: code.split("\n").length,
-          functions: (code.match(/function\s+\w+/g) || []).length,
-          classes: (code.match(/class\s+\w+/g) || []).length,
-          imports: (code.match(/import\s+/g) || []).length,
-          comments: (code.match(/\/\/|\/\*/g) || []).length,
-        };
-        
-        // 計算圈複雜度（簡化版）
-        const complexity = (
-          (code.match(/if\s*\(/g) || []).length +
-          (code.match(/else\s+if/g) || []).length +
-          (code.match(/for\s*\(/g) || []).length +
-          (code.match(/while\s*\(/g) || []).length +
-          (code.match(/case\s+/g) || []).length
-        );
-        
-        return {
-          content: [{
-            type: "text",
-            text: JSON.stringify({
-              ...metrics,
-              cyclomaticComplexity: complexity
-            }, null, 2)
-          }]
-        };
-      }
-    }
-  ],
-  
-  hooks: {
-    turnEnd: async (ctx) => {
-      // 自動分析修改過的檔案
-      for (const result of ctx.toolResults) {
-        if (result.toolName === "write" || result.toolName === "edit") {
-          const filePath = result.args.path;
-          // 分析並報告
-        }
-      }
-    }
+  async execute(_toolCallId, params, _signal, _onUpdate, _ctx) {
+    const code = await readFile(params.file, "utf-8");
+    
+    const metrics = {
+      lines: code.split("\n").length,
+      functions: (code.match(/function\s+\w+/g) || []).length,
+      classes: (code.match(/class\s+\w+/g) || []).length,
+      imports: (code.match(/import\s+/g) || []).length,
+      comments: (code.match(/\/\/|\/\*/g) || []).length,
+    };
+    
+    // 計算圈複雜度（簡化版）
+    const complexity = (
+      (code.match(/if\s*\(/g) || []).length +
+      (code.match(/else\s+if/g) || []).length +
+      (code.match(/for\s*\(/g) || []).length +
+      (code.match(/while\s*\(/g) || []).length +
+      (code.match(/case\s+/g) || []).length
+    );
+    
+    return {
+      content: [{
+        type: "text",
+        text: JSON.stringify({
+          ...metrics,
+          cyclomaticComplexity: complexity
+        }, null, 2)
+      }]
+    };
   }
-};
+});
+
+export default function (pi: ExtensionAPI) {
+  pi.registerTool(analyzeComplexityTool);
+}
 ```
 
 ## 8.9 實戰範例：即時預覽
 
 ```typescript
 // extensions/preview/index.ts
+import { readFile, writeFile } from "node:fs/promises";
 import { chromium } from "playwright";
+import { marked } from "marked";
 
 export default {
   name: "preview",
@@ -441,7 +420,7 @@ export default {
       parameters: {
         file: { type: "string", description: "HTML file path" }
       },
-      execute: async (args) => {
+      execute: async (args: { file: string }) => {
         const html = await readFile(args.file, "utf-8");
         
         // 啟動瀏覽器
