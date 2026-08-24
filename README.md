@@ -23,22 +23,28 @@
 - [Ch 9: Skills 系統](chapters/chapter-09.md)
 - [Ch 10: Session 管理](chapters/chapter-10.md)
 
-### 第四部分：進階開發（待撰寫）
-- Ch 11: Model 整合
-- Ch 12: Extension 開發實戰
-- Ch 13: SDK 嵌入
-- Ch 14: RPC 模式
-- Ch 15: Package 系統
+### 第四部分：進階開發
+- [Ch 11: Model 整合](chapters/chapter-11.md)
+- [Ch 12: Extension 開發實戰](chapters/chapter-12.md)
+- [Ch 13: SDK 嵌入](chapters/chapter-13.md)
+- [Ch 14: RPC 模式](chapters/chapter-14.md)
+- [Ch 15: Package 系統](chapters/chapter-15.md)
 
-### 第五部分：安全與部署（待撰寫）
-- Ch 16: 安全架構
-- Ch 17: 容器化部署
-- Ch 18: 多模式運行
+### 第五部分：安全與部署
+- [Ch 16: 安全架構](chapters/chapter-16.md)
+- [Ch 17: 容器化部署](chapters/chapter-17.md)
+- [Ch 18: 多模式運行](chapters/chapter-18.md)
 
-### 第六部分：比較與實踐（待撰寫）
-- Ch 19: 競品深度比較
-- Ch 20: 實戰案例
-- Ch 21: 效能與基準
+### 第六部分：比較與實踐
+- [Ch 19: 競品深度比較](chapters/chapter-19.md)
+- [Ch 20: 實戰案例](chapters/chapter-20.md)
+- [Ch 21: 效能與基準](chapters/chapter-21.md)
+
+### 附錄
+- [附錄 A: 命令參考](appendices/appendix-a.md)
+- [附錄 B: Configuration 參考](appendices/appendix-b.md)
+- [附錄 C: Extension API 參考](appendices/appendix-c.md)
+- [附錄 D: 疑難排解](appendices/appendix-d.md)
 
 ## 🔧 範例
 
@@ -74,7 +80,7 @@ export ANTHROPIC_API_KEY="sk-ant-..."
 1. **初學者**：從 Ch 1-2 開始，了解 Pi 是什麼
 2. **進階使用者**：閱讀 Ch 3-10，深入理解架構
 3. **Extension 開發者**：重點閱讀 Ch 8-9，並參考 examples/
-4. **生產部署**：閱讀 Ch 16-17（待撰寫）
+4. **生產部署**：閱讀 Ch 16-17，了解安全與容器化
 
 ## 🤝 貢獻
 

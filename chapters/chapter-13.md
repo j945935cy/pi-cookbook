@@ -13,34 +13,55 @@ npm install @earendil-works/pi-coding-agent
 ## 13.2 基本用法
 
 ```typescript
-import { Agent, SessionManager } from "@earendil-works/pi-coding-agent";
+import { Agent } from "@earendil-works/pi-coding-agent";
 
 // 建立 Agent
 const agent = new Agent({
   model: { provider: "anthropic", id: "claude-sonnet-4-20250514" }
 });
 
-// 開啟 session
-const session = SessionManager.open("./session.jsonl");
+// 訂閱事件取得回應
+agent.subscribe(async (event) => {
+  if (event.type === "message_end") {
+    console.log("Response:", event.message);
+  }
+});
 
-// 執行 prompt
-const result = await agent.prompt("Hello, world!");
-
-// 獲取回應
-console.log(result);
+// 執行 prompt（回傳 Promise<void>）
+await agent.prompt("Hello, world!");
 ```
 
-## 13.3 串流回應
+> **重要**：`prompt()` 回傳 `Promise<void>`，不是回應內容。你需要透過 `subscribe()` 監聽事件來取得回應。
+
+## 13.3 事件訂閱
 
 ```typescript
 const agent = new Agent({
   model: { provider: "anthropic", id: "claude-sonnet-4-20250514" }
 });
 
-// 串流回應
-for await (const chunk of agent.promptStream("Write a story")) {
-  process.stdout.write(chunk);
-}
+// 訂閱所有事件
+const unsubscribe = agent.subscribe(async (event, signal) => {
+  switch (event.type) {
+    case "message_start":
+      console.log("Start:", event.message);
+      break;
+    case "message_update":
+      process.stdout.write(event.delta);
+      break;
+    case "message_end":
+      console.log("\nEnd:", event.message);
+      break;
+    case "turn_end":
+      console.log("Tool results:", event.toolResults);
+      break;
+  }
+});
+
+await agent.prompt("Write a story");
+
+// 取消訂閱
+unsubscribe();
 ```
 
 ## 13.4 自訂工具
@@ -123,7 +144,7 @@ const agent = new Agent({
 
 ```typescript
 #!/usr/bin/env node
-import { Agent, SessionManager } from "@earendil-works/pi-coding-agent";
+import { Agent } from "@earendil-works/pi-coding-agent";
 import readline from "node:readline";
 
 const rl = readline.createInterface({
@@ -135,7 +156,15 @@ const agent = new Agent({
   model: { provider: "anthropic", id: "claude-sonnet-4-20250514" }
 });
 
-const session = SessionManager.open("./session.jsonl");
+// 訂閱事件
+agent.subscribe(async (event) => {
+  if (event.type === "message_update") {
+    process.stdout.write(event.delta);
+  }
+  if (event.type === "message_end") {
+    console.log("\n");
+  }
+});
 
 console.log("Pi CLI - Type 'exit' to quit");
 
@@ -145,9 +174,7 @@ const ask = () => {
       process.exit(0);
     }
     
-    const response = await agent.prompt(input);
-    console.log(`AI: ${response}`);
-    
+    await agent.prompt(input);
     ask();
   });
 };
@@ -171,7 +198,16 @@ const agent = new Agent({
 app.post("/chat", async (req, res) => {
   const { message } = req.body;
   
-  const response = await agent.prompt(message);
+  let response = "";
+  
+  // 訂閱事件收集回應
+  agent.subscribe(async (event) => {
+    if (event.type === "message_update") {
+      response += event.delta;
+    }
+  });
+  
+  await agent.prompt(message);
   
   res.json({ response });
 });
@@ -183,12 +219,18 @@ app.post("/chat/stream", async (req, res) => {
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
   
-  for await (const chunk of agent.promptStream(message)) {
-    res.write(`data: ${chunk}\n\n`);
-  }
+  // 訂閱事件串流
+  agent.subscribe(async (event) => {
+    if (event.type === "message_update") {
+      res.write(`data: ${event.delta}\n\n`);
+    }
+    if (event.type === "message_end") {
+      res.write("data: [DONE]\n\n");
+      res.end();
+    }
+  });
   
-  res.write("data: [DONE]\n\n");
-  res.end();
+  await agent.prompt(message);
 });
 
 app.listen(3000, () => {

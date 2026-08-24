@@ -50,29 +50,29 @@ Claude Code:
 Pi:
 ├── 4 個核心工具（可擴展）
 ├── < 1,000 tokens system prompt
-├── 無內建 permission（用容器隔離）
-├── 無內建 sub-agent（用 extension 實作）
+├── 內建安全機制（beforeToolCall hook、使用者確認）
+├── Extension 系統（可自訂安全規則）
 └── 開發者完全控制
 
 優勢：
 - 工具少，模型決策快
 - Prompt 短，token 效率高
 - Extension 系統，完全自訂
-- 一行代碼要改？自己寫 extension
+- 可透過 Extension 增強安全控制
 ```
 
-## 1.4 418 行的意義
+## 1.4 核心代碼行數
 
-Pi 的核心 agent loop 只有 418 行。這是什麼概念？
+Pi 的核心 agent loop 約 552 行。這是什麼概念？
 
 | 框架 | 核心代碼行數 |
 |------|-------------|
-| Pi Agent Loop | 418 行 |
+| Pi Agent Loop | ~552 行 |
 | Claude Code | 不公開（估計 5,000+ 行） |
 | LangChain Agent | 10,000+ 行 |
 | AutoGPT | 15,000+ 行 |
 
-418 行意味著：
+552 行意味著：
 - **可讀性**：一個下午就能讀完
 - **可維護性**：Bug 容易定位
 - **可擴展性**：Extension 系統比核心更強大
@@ -84,10 +84,10 @@ Pi 的成就：
 
 | 指標 | 數值 |
 |------|------|
-| GitHub Stars | 96,2k |
+| GitHub Stars | 96.2k+ |
 | npm Downloads | 快速成長中 |
 | Terminal-Bench 2.0 | 與 Claude Code 並列 |
-| 核心代碼 | 418 行 |
+| 核心代碼 | ~552 行 |
 | System Prompt | < 1,000 tokens |
 | 預設工具 | 4 個 |
 | 支援 Providers | 15+ |
